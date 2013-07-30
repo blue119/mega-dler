@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import glob
+from time import time, sleep
+from mega import Mega
+
+# read first avaliable to download line
+def readFirstLine(file):
+    """docstring for readFirstLine"""
+    with open(file, 'rb') as f:
+        for l in f.readlines():
+            if not l.startswith('https://mega.co.nz/'): continue # skip comment
+            return l.replace('\n', '')
+        return None
+
+def rmLine(file, line):
+    """docstring for rmLine"""
+
+    with open(file, 'rb') as f:
+        lines = f.readlines()
+
+    with open(file, 'wb') as f:
+        line = "%s\n" % line
+        if line in lines: lines.remove(line)
+        f.writelines(lines)
+
+def skipThisLine(file, line):
+    """docstring for skipThisLine"""
+
+    print("Skip %s" % line)
+
+    with open(file, 'rb') as f:
+        lines = f.readlines()
+
+    with open(file, 'wb') as f:
+        line = "%s\n" % line
+        if line in lines: 
+            idx = lines.index(line)
+            lines[idx] = "# %s" % line
+            f.writelines(lines)
+
+mega = Mega({'verbose': True})
+def mg_dl(url, fdl):
+    """docstring for mg_dl"""
+
+    print("Donwload: %s" % url)
+    info = mega.get_public_url_info(url)
+    print("filename: %s, size: %s" % (info['name'], info['size']))
+    mega.download_url(url, fdl)
+
+def main(argv):
+    """docstring for main"""
+
+    max_retry = 3
+    dl_file = argv[1]
+
+    if len(argv) == 3:
+        fdl = argv[2]
+        if not os.path.exists(fdl): os.makedirs(fdl)
+    else:
+        fdl = "."
+
+    if not os.path.exists(dl_file):
+        print("File Not Found. %s" % dl_file)
+
+    s_str = "\n" + "-" * 80
+    retry = 0
+    while True:
+        try:
+            if(retry >= max_retry): 
+                skipThisLine(dl_file, readFirstLine(dl_file))
+                retry = 0
+
+            time_s = time()
+            line = readFirstLine(dl_file)
+            if not line: return 0
+
+            print(s_str)
+            mg_dl(line, fdl)
+            rmLine(dl_file, line)
+            print("Consume: %.3f secs." % (time() - time_s))
+            retry = 0
+
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            retry += 1
+
+        finally:
+            sleep(5) # rest
+            pass
+
+if __name__ == '__main__':
+    main(sys.argv)
+
