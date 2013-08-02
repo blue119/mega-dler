@@ -33,16 +33,13 @@ def main(argv):
     valid_n = len(valid_list)
     npf = valid_n/slice_n
 
-    for i in xrange(slice_n):
-        with open(file_prefix + str(i), 'wb') as f:
-            if i == 0:
-                # first
-                f.writelines(invalid_list + valid_list[i * npf:((i + 1)*npf)-1])
-            elif i == (slice_n - 1):
-                #last
-                f.writelines(valid_list[i * npf:])
-            else:
-                f.writelines(valid_list[i * npf:((i + 1)*npf)-1])
+    fs = [ open(file_prefix + str(i), 'a') for i in xrange(slice_n) ]
+
+    fs[0].writelines(invalid_list)
+    for n in xrange(len(valid_list)):
+        fs[n%(slice_n)].writelines(valid_list[n])
+
+    [ close(f) for f in fs ]
 
 if __name__ == '__main__':
     main(sys.argv)
