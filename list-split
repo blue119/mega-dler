@@ -39,7 +39,7 @@ def main(argv):
     for n in xrange(len(valid_list)):
         fs[n%(slice_n)].writelines(valid_list[n])
 
-    [ close(f) for f in fs ]
+    [ f.close() for f in fs ]
 
 if __name__ == '__main__':
     main(sys.argv)
